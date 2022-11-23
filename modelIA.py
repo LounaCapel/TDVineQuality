@@ -1,4 +1,3 @@
-
 #nom, para, retour
 from pydantic import BaseModel
 from keras import models
@@ -6,20 +5,20 @@ from keras import models
 class Vin (BaseModel):
     fixedActivity : float
 
-def PredictionNote(vin : Vin) -> int:
+def predictionNote(vin : Vin) -> int:
     return (0)
 
-def VinParfait() -> Vin:
+def vinParfait() -> Vin:
     return ("")
 
-def ModeleSerialise(modele : models) -> models :
-    return()
+def modeleSerialise() -> models :
+    return("")
 
-def Description() -> str :
+def description() -> str :
     return ("information")
 
-def Enrichir(modele : models,new : Vin ) -> models :
+def enrichir(modele : models,new : Vin ) -> models :
     return (modele)
 
-def Entrainer(modele : models) -> models :
+def entrainer(modele : models) -> models :
     return (modele)
