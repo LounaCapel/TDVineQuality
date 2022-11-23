@@ -17,8 +17,11 @@ def modeleSerialise() -> models :
 def description() -> str :
     return ("information")
 
-def enrichir(modele : models,new : Vin ) -> models :
-    return (modele)
+def enrichir(new : Vin) -> models :
+    return ("")
 
-def entrainer(modele : models) -> models :
-    return (modele)
+def entrainer() -> models :
+    return ("")
+
+
+import pandas as pd
