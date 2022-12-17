@@ -10,16 +10,14 @@ Created on Sun Dec 11 15:08:45 2022
 #################################################### Importation ####################################################
 #####################################################################################################################
 from pydantic import BaseModel
-from keras import models
-import matplotlib.pyplot as plt
+from typing import Optional
 import pandas as pd
 import numpy as np
 from csv import writer
 
-from sklearn.tree import DecisionTreeClassifier, plot_tree, export_text
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 import pickle
 
 
@@ -28,7 +26,7 @@ import pickle
 #####################################################################################################################
 ##################################################### Class Vin #####################################################
 #####################################################################################################################
-class Vin :
+class Vin(BaseModel) :
     fixedActivity : float
     volatileAcidity : float
     citricAcid : float
@@ -40,8 +38,8 @@ class Vin :
     ph : float
     sulphates : float
     alcohol : float
-    quality : int
-    identifiant : int
+    quality : Optional[int] = None
+    identifiant : Optional[int] = None
 
 
 #####################################################################################################################
@@ -52,18 +50,18 @@ Entrée : un vin à tester et un model utilise
 Description : permet de renvoyer la prediction du niveau d'un vin en fonction de ses caractéristiques
 Sortie : un entier definissant la qualite du vin
 '''
-def predictionNote(vin : Vin, RandomForest : models ) -> int:
-    prediction : int = RandomForest.predict( [[vin.fixedActivity,
-                                               vin.volatileAcidity,
-                                               vin.citricAcid,
-                                               vin.residualSugar,
-                                               vin.chlorides,
-                                               vin.freeSulfurDioxide,
-                                               vin.toalSulfurDioxide,
-                                               vin.density,
-                                               vin.ph,
-                                               vin.sulphates,
-                                               vin.alcohol]])
+def predictionNote(vin : Vin, RandomForest : RandomForestClassifier ) -> int:
+    prediction : int = int(RandomForest.predict([[vin.fixedActivity,
+                                                vin.volatileAcidity,
+                                                vin.citricAcid,
+                                                vin.residualSugar,
+                                                vin.chlorides,
+                                                vin.freeSulfurDioxide,
+                                                vin.toalSulfurDioxide,
+                                                vin.density,
+                                                vin.ph,
+                                                vin.sulphates,
+                                                vin.alcohol]]))
     return (prediction)
 
 
@@ -107,7 +105,7 @@ Entrée : un model
 Description : permet de serialise le model en un fichier en .pkl
 Sortie : None
 '''
-def modeleSerialise(RandomForest : models) -> None :
+def modeleSerialise(RandomForest : RandomForestClassifier) -> None :
     pickle.dump(RandomForest, open("RandomForestSerialise.pkl", 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
     return(None)
 
@@ -120,7 +118,7 @@ Entrée : un nom de fichier
 Description : permet de  load un model serialise
 Sortie : un models
 '''
-def loadModeleSerialise(NomFichier : str) -> models :
+def loadModeleSerialise(NomFichier : str) -> RandomForestClassifier :
     with open(NomFichier, 'rb') as f:
         data = pickle.load(f)
     return(data)
@@ -134,7 +132,7 @@ Entrée : un model
 Description : permet d'obtenir la description d'un model
 Sortie : une description, avec un texte, un dictionnaire et une accuracy
 '''
-def description(RandomForest : models, NomFichier : str) -> str :
+def description(RandomForest : RandomForestClassifier, NomFichier : str) -> str :
     
     ###############################################
     ######### Description texte du model ##########
@@ -172,6 +170,7 @@ def description(RandomForest : models, NomFichier : str) -> str :
     ###############################################
     DictHyperPara : dict = {}
 
+    DictHyperPara["InfoText"] : str = InfoTexteModel
     DictHyperPara["NbrArbre"] : int = RandomForest.n_estimators
     DictHyperPara["CitereDecision"] : str = RandomForest.criterion
     DictHyperPara["ProfondeurMax"] : int = RandomForest.max_depth
@@ -188,9 +187,11 @@ def description(RandomForest : models, NomFichier : str) -> str :
     DictHyperPara["RepartitionApprentisage"] : bool = RandomForest.warm_start
     DictHyperPara["PoidsAssocieClasse"] : int = RandomForest.class_weight
     DictHyperPara["ReduireNbrObservation"] : int = RandomForest.max_samples
+    DictHyperPara["Precision"] : float = accuracy
+    DictHyperPara["NbrVin"] : int = len(wines["alcohol"])
 
     
-    return (InfoTexteModel,DictHyperPara,accuracy)
+    return (DictHyperPara)
 
 
 ####################################################################################################################
@@ -235,7 +236,7 @@ Entrée : un nom de fichier contenant les données d'entrainement
 Description : permet d'obtenir un model prédictif en fonction des données d'entrée
 Sortie : un model prédictif
 '''
-def entrainer(NomFichier : str ) -> models :
+def entrainer(NomFichier : str ) -> RandomForestClassifier :
     wines = pd.read_csv(NomFichier)
     WinesData = []
     for i in range (len(wines["alcohol"])) :
@@ -261,7 +262,7 @@ def entrainer(NomFichier : str ) -> models :
          min_samples_split = 2,
          min_samples_leaf = 1,
          min_weight_fraction_leaf = 0.0,
-         max_features = 'auto',
+         max_features = 'sqrt',
          max_leaf_nodes = None,
          min_impurity_decrease = 0.0,
          bootstrap = True,
@@ -280,53 +281,54 @@ def entrainer(NomFichier : str ) -> models :
 
 
 
-VinTest = Vin()
-VinTest.fixedActivity : float = 12
-VinTest.volatileAcidity : float = 12
-VinTest.citricAcid : float = 12
-VinTest.residualSugar : float = 12
-VinTest.chlorides : float = 12
-VinTest.freeSulfurDioxide : float = 12
-VinTest.toalSulfurDioxide : float = 12
-VinTest.density : float = 12
-VinTest.ph : float = 12
-VinTest.sulphates : float = 12
-VinTest.alcohol : float = 12
-VinTest.quality : float = 12
+# VinTest = Vin(
+#     fixedActivity=12, 
+#     volatileAcidity=12, 
+#     citricAcid=12, 
+#     residualSugar=12, 
+#     chlorides=12,
+#     freeSulfurDioxide=12,
+#     toalSulfurDioxide=12,
+#     density=12,
+#     ph=12,
+#     sulphates=12,
+#     alcohol=12,
+#     quality=12,
+#     identifiant=1
+#     )
 
 
-VinTest2 = Vin()
-VinTest2.fixedActivity : float = 8.1
-VinTest2.volatileAcidity : float = 0.38
-VinTest2.citricAcid : float = 0.28
-VinTest2.residualSugar : float = 2.1
-VinTest2.chlorides : float = 0.066
-VinTest2.freeSulfurDioxide : float = 13.0
-VinTest2.toalSulfurDioxide : float = 30.0
-VinTest2.density : float = 0.9968
-VinTest2.ph : float = 3.23
-VinTest2.sulphates : float = 0.73
-VinTest2.alcohol : float = 9.7
+# VinTest2 = Vin(
+#     fixedActivity=8.1, 
+#     volatileAcidity=0.38, 
+#     citricAcid=0.28, 
+#     residualSugar=2.1, 
+#     chlorides=0.066,
+#     freeSulfurDioxide=13.0,
+#     toalSulfurDioxide=30.0,
+#     density=0.9968,
+#     ph=3.23,
+#     sulphates=0.73,
+#     alcohol=9.7,
+#     quality=0,
+#     identifiant=2
+#     )
 
 
 
-foret = entrainer('Wines (copy).csv')
-pred = predictionNote(VinTest2,foret)
-print(pred)
+# foret = entrainer('Wines (copy).csv')
+# pred = predictionNote(VinTest2,foret)
+# print(pred)
 
-#enrichir(VinTest,'Wines (copy).csv')
+# #enrichir(VinTest,'Wines (copy).csv')
 
 
-print(description(foret, 'Wines.csv'))
+# print(description(foret, 'Wines.csv'))
 
-#modeleSerialise(foret)
+# modeleSerialise(foret)
 
-modeleSerialise(foret)
-
-foret2 = loadModeleSerialise("RandomForestSerialise.pkl")
-pred = predictionNote(VinTest2,foret2)
-print(pred)
+# foret2 = loadModeleSerialise("RandomForestSerialise.pkl")
+# pred = predictionNote(VinTest2,foret2)
+# print(pred)
 
 #main()
-
-
