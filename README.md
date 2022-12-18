@@ -17,3 +17,5 @@ Ayant nous avons créer un parfait qui pourrait être considéré comme parfait.
 source .venv/bin/activate  
 uvicorn main:app  
 ```
+## Bug connu :  
+Si la description du modèle renvoie une erreur 500, il faut retrain le modèle.
