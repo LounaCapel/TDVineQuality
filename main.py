@@ -10,7 +10,7 @@ async def predict(vin: Vin):
 
 @app.get("/api/predict")
 async def perfect():
-    return vinParfait("")
+    return vinParfait('Wines.csv')
 
 @app.get("/api/model")
 async def getModel():
